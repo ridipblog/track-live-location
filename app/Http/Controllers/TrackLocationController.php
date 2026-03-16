@@ -16,6 +16,10 @@ class TrackLocationController extends Controller
     {
         return view('live-location');
     }
+    public function mapPlot()
+    {
+        return view('map-plot');
+    }
 
     public function updateLocation(Request $request)
     {
