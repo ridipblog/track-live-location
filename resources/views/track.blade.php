@@ -56,6 +56,23 @@
                 return distance < 50;
             }
 
+            // *** Get speed ***
+            function getSpeed(lat, lng) {
+
+                if (!lastPoint) return 0;
+
+                let distance = map.distance(
+                    [lastPoint.lat, lastPoint.lng],
+                    [lat, lng]
+                );
+
+                let time = (Date.now() - lastPoint.time) / 1000;
+
+                if (time === 0) return 0;
+
+                return distance / time; // m/s
+            }
+
             // *** Set Maker and draw line ***
             function setMakerAndDrawLine(lat, lng) {
                 if (!isValidPoint(lat, lng)) { // break old line and crate new line 
@@ -71,6 +88,10 @@
                     // 🟢 start new path
                     path = [];
                 }
+
+                let speed = getSpeed(lat, lng);
+                console.log("speed", speed);
+                console.log("speed KM/H", speed * 3.6);
 
                 // Move map
                 map.setView([lat, lng], 15);
@@ -120,7 +141,8 @@
                 console.log("position", position);
                 lastPoint = {
                     lat: position.coords.latitude,
-                    lng: position.coords.longitude
+                    lng: position.coords.longitude,
+                    time: Date.now()
                 };
 
                 $.ajax({
@@ -166,7 +188,8 @@
                 setMakerAndDrawLine("26.12870121608684", "91.73718609195309");
                 lastPoint = {
                     lat: "26.12870121608684",
-                    lng: "91.73718609195309"
+                    lng: "91.73718609195309",
+                    time: Date.now()
                 };
                 $.ajax({
                     url: "/update-location",

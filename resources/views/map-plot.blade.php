@@ -175,7 +175,8 @@
 
             lastPoint = {
                 lat,
-                lng
+                lng,
+                time: Date.now()
             };
 
             // 📍 Move map
