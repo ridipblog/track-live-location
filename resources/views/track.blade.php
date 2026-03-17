@@ -28,6 +28,7 @@
 
     <div id="message"></div>
     <button id="send-location">Send Location</button>
+    <button id="send-location-1">Send Location 1</button>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -36,7 +37,67 @@
         let marker;
         let path = [];
         let polyline;
+        let lastPoint = null;
+        let polylines = [];
+        let currentPath = [];
         $(document).ready(function() {
+
+            // *** Calculate distance between two points ***
+            function isValidPoint(lat, lng) {
+                console.log("lastPoint", lastPoint);
+                if (!lastPoint) return true;
+
+                let distance = map.distance(
+                    [lastPoint.lat, lastPoint.lng],
+                    [lat, lng]
+                );
+                console.log("distance", distance);
+
+                return distance < 50;
+            }
+
+            // *** Set Maker and draw line ***
+            function setMakerAndDrawLine(lat, lng) {
+                if (!isValidPoint(lat, lng)) { // break old line and crate new line 
+                    if (path.length > 1) {
+                        let newPolyline = L.polyline(path, {
+                            color: 'blue',
+                            weight: 5
+                        }).addTo(map);
+
+                        polylines.push(newPolyline);
+                    }
+
+                    // 🟢 start new path
+                    path = [];
+                }
+
+                // Move map
+                map.setView([lat, lng], 15);
+
+                // Add or update marker
+                if (marker) {
+                    marker.setLatLng([lat, lng]);
+                } else {
+                    marker = L.marker([lat, lng]).addTo(map)
+                        .bindPopup("You are here")
+                        .openPopup();
+                }
+
+                // Save route path
+                path.push([lat, lng]);
+
+                // Draw line
+                if (polyline) {
+                    polyline.setLatLngs(path);
+                } else {
+                    polyline = L.polyline(path, {
+                        color: 'blue',
+                        weight: 5
+                    }).addTo(map);
+                }
+            }
+
             // Initialize Map
             map = L.map('map').setView([0, 0], 2);
 
@@ -55,7 +116,13 @@
             }
 
             function showPosition(position, extra = null) {
+
                 console.log("position", position);
+                lastPoint = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+
                 $.ajax({
                     url: "/update-location",
                     method: "POST",
@@ -86,30 +153,7 @@
 
                 // $("#map").html(iframe);
 
-                // Move map
-                map.setView([position.coords.latitude, position.coords.longitude], 15);
-
-                // Add or update marker
-                if (marker) {
-                    marker.setLatLng([position.coords.latitude, position.coords.longitude]);
-                } else {
-                    marker = L.marker([position.coords.latitude, position.coords.longitude]).addTo(map)
-                        .bindPopup("You are here")
-                        .openPopup();
-                }
-
-                // Save route path
-                path.push([lat, lng]);
-
-                // Draw line
-                if (polyline) {
-                    polyline.setLatLngs(path);
-                } else {
-                    polyline = L.polyline(path, {
-                        color: 'blue',
-                        weight: 5
-                    }).addTo(map);
-                }
+                setMakerAndDrawLine(position.coords.latitude, position.coords.longitude);
             }
 
             $("#update-cordinations").click(function() {
@@ -119,12 +163,36 @@
             });
 
             $("#send-location").click(function() {
+                setMakerAndDrawLine("26.12870121608684", "91.73718609195309");
+                lastPoint = {
+                    lat: "26.12870121608684",
+                    lng: "91.73718609195309"
+                };
                 $.ajax({
                     url: "/update-location",
                     method: "POST",
                     data: {
-                        latitude: "26.156180268016268",
-                        longitude: "91.77840797839819",
+                        latitude: "26.12870121608684",
+                        longitude: "91.73718609195309",
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function(response) {
+                        alert("Location sent successfully");
+                    }
+
+                });
+                alert("Location sent successfully");
+            });
+
+            $("#send-location-1").click(function() {
+
+                setMakerAndDrawLine("26.128616842300676", "91.73714630788221");
+                $.ajax({
+                    url: "/update-location",
+                    method: "POST",
+                    data: {
+                        latitude: "26.128616842300676",
+                        longitude: "91.73714630788221",
                         _token: "{{ csrf_token() }}"
                     },
                     success: function(response) {
